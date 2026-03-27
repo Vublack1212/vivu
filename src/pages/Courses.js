@@ -1,71 +1,68 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { useState, useEffect } from "react";
+import CourseForm from "../components/CourseForm";
 import CourseList from "../components/CourseList";
 
 function Courses() {
   const [courses, setCourses] = useState([]);
-  const [name, setName] = useState("");
-  const [ok, setOk] = useState(false);
+  const [editIndex, setEditIndex] = useState(null);
 
   useEffect(() => {
-    const data = localStorage.getItem("courses");
-    if (data) setCourses(JSON.parse(data));
-    setOk(true);
+    let data = localStorage.getItem("courses");
+    if (data) {
+      setCourses(JSON.parse(data));
+    }
   }, []);
 
   useEffect(() => {
-    if (ok) localStorage.setItem("courses", JSON.stringify(courses));
-  }, [courses, ok]);
+    localStorage.setItem("courses", JSON.stringify(courses));
+  }, [courses]);
 
-  const add = useCallback(() => {
-    if (name === "") return;
-    setCourses([...courses, name]);
-    setName("");
-  }, [name, courses]);
+  function addCourse(course) {
+    if (editIndex !== null) {
+      let newCourses = [...courses];
+      newCourses[editIndex] = course;
+      setCourses(newCourses);
+      setEditIndex(null);
+      alert("Cập nhật thành công");
+    } else {
+      let newCourses = [...courses, course];
+      setCourses(newCourses);
+      alert("Thêm thành công");
+    }
+  }
 
-  const del = useCallback(
-    (i) => {
-      setCourses(courses.filter((_, index) => index !== i));
-    },
-    [courses]
-  );
+  function deleteCourse(index) {
+    let check = window.confirm("Bạn có chắc muốn xóa?");
+    if (check) {
+      let newCourses = courses.filter((item, i) => i !== index);
+      setCourses(newCourses);
+    }
+  }
 
-  const total = useMemo(() => courses.length, [courses]);
+  function editCourse(index) {
+    setEditIndex(index);
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-lg">
-        <Link to="/" className="text-sm text-blue-500">
-          ← Trang chủ
-        </Link>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold text-blue-700 mb-2">
+        Quản lý Khóa học
+      </h1>
 
-        <h2 className="text-2xl font-bold text-center mt-2 mb-4">
-          Quản lý khóa học
-        </h2>
+      <p className="mb-4">
+        Tổng số: <span className="text-blue-600">{courses.length}</span> khóa học
+      </p>
 
-        <p className="text-center mb-4">
-          Tổng số khóa học: <b>{total}</b>
-        </p>
+      <CourseForm
+        addCourse={addCourse}
+        editCourse={editIndex !== null ? courses[editIndex] : null}
+      />
 
-        <div className="flex gap-2 mb-4">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nhập tên khóa học"
-            className="flex-1 border rounded px-3 py-2"
-          />
-          <button
-            onClick={add}
-            className="bg-green-500 text-white px-4 rounded hover:bg-green-600"
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </button>
-        </div>
-
-        <CourseList courses={courses} del={del} />
-      </div>
+      <CourseList
+        courses={courses}
+        deleteCourse={deleteCourse}
+        editCourse={editCourse}
+      />
     </div>
   );
 }
